@@ -1,0 +1,10 @@
+# Dependency directories
+node_modules/
+
+# Compiled binary addons (https://nodejs.org/api/addons.html)
+build/Release
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride

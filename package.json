@@ -1,0 +1,17 @@
+{
+  "name": "graphql-field-finder",
+  "version": "1.0.0",
+  "description": "",
+  "main": "graphql-field-finder.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "graphql": "^16.6.0",
+    "graphql-config": "^4.4.0",
+    "@babel/parser": "7.20.7",
+    "@babel/traverse": "7.20.12"
+  }
+}
