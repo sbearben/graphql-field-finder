@@ -2,9 +2,9 @@
 // queries in your codebase.
 // 
 // First, add a .graphqlconfig in your directory pointing to your schema
-// Then, run the script with:
+// Then, run the script with (path can be relative or absolute):
 //
-// node graphql-field-finder.js "../relative/path/to/repo" projectName Field.name
+// node graphql-field-finder.js "/path/to/repo" projectName Field.name
 //
 // It will output a list of files and queries that contain the field you're
 // looking for:
@@ -14,6 +14,7 @@
 import { loadConfigSync } from "graphql-config"
 import { exec } from "child_process"
 import { readFileSync } from "fs"
+import os from "os"
 import { parse as parseJS } from "@babel/parser"
 import _traverse from "@babel/traverse"
 import {
@@ -24,24 +25,25 @@ import {
 } from "graphql";
 const traverse = _traverse.default;
 
-// repoLocation must be relative to where this is run from - I'm sure there's a better way to do this
-const repoLocation = process.argv[2];
+const repoLocation = process.argv[2].replace("~", os.homedir);
 const projectName = process.argv[3];
 const fieldName = process.argv[4];
 
+process.chdir(repoLocation)
+
 const schema = loadConfigSync({
-  filepath: `${repoLocation}/.graphqlconfig`,
+  filepath: `.graphqlconfig`,
 }).getProject(projectName).getSchemaSync()
 
 const desiredTypeDotField = getDesiredTypeDotField(fieldName);
 
 // Do a grep to find which files have GraphQL queries in them so we don't
 // look through all JS in the whole app
-exec(`cd ${repoLocation} && git grep -rl "gql" -- '*.ts' '*.tsx'`, (error, stdout, stderr) => {
+exec(`git grep -rl "gql" -- '*.ts' '*.tsx'`, (error, stdout, stderr) => {
   const files = stdout.split("\n").filter(filename => !!filename.length);
 
   const usages = files
-    .map(filename => findGraphQLUsagesInFile(`${repoLocation}/${filename}`, desiredTypeDotField))
+    .map(filename => findGraphQLUsagesInFile(filename, desiredTypeDotField))
     .flat();
 
   console.log(
