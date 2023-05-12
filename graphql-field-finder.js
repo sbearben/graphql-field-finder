@@ -73,7 +73,14 @@ function findGraphQLUsagesInFile(filename, typeDotField) {
 
   const usages = [];
   graphqlStringNodes.forEach(jsNode => {
-    const ast = parseGraphQL(jsNode.value.raw);
+    let ast
+    try {
+      ast = parseGraphQL(jsNode.value.raw);  
+    } catch(e) {
+      console.log(`Error parsing: ${filename}`)
+      throw e
+    }
+    
     const typeInfo = new TypeInfo(schema);
     
     visit(
