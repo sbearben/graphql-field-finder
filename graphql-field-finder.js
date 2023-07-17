@@ -48,7 +48,8 @@ exec(`git grep -rl "gql" -- '*.ts' '*.tsx'`, (error, stdout, stderr) => {
 
   console.log(
     usages
-      .map(usage => `${usage.filename}:${usage.line} ${usage.operationName}`)
+      // .map(usage => `${usage.filename}:${usage.line} ${usage.operationName}`)
+      .map(usage => `${usage.filename}#L${usage.line}`)
       .join("\n")
   );
 });
@@ -77,7 +78,7 @@ function findGraphQLUsagesInFile(filename, typeDotField) {
     try {
       ast = parseGraphQL(jsNode.value.raw);  
     } catch(e) {
-      console.log(`Error parsing: ${filename}`)
+      console.error(`Error parsing: ${filename}\nOutput of parseGraphQL:\n${jsNode.value.raw}\n`)
       throw e
     }
     
