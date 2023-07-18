@@ -31,9 +31,19 @@ const fieldName = process.argv[4];
 
 process.chdir(repoLocation)
 
-const schema = loadConfigSync({
-  filepath: `.graphqlconfig`,
-}).getProject(projectName).getSchemaSync()
+let schema;
+
+try {
+  schema = loadConfigSync({
+    filepath: `.graphqlconfig`,
+  }).getProject(projectName).getSchemaSync()
+} catch {
+  schema = loadConfigSync({
+    rootDir: '.',
+  }).getDefault().getSchemaSync()
+}
+
+
 
 const desiredTypeDotField = getDesiredTypeDotField(fieldName);
 
