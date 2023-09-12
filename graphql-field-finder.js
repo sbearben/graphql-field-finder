@@ -59,7 +59,7 @@ exec(`git grep -rl "gql" -- '*.ts' '*.tsx'`, (error, stdout, stderr) => {
   console.log(
     usages
       // .map(usage => `${usage.filename}:${usage.line} ${usage.operationName}`)
-      .map(usage => `${usage.filename}#L${usage.line}`)
+      .map(usage => `${usage.filename}#L${usage.line} - ${usage.operationName.toLowerCase()}`)
       .join("\n")
   );
 });
