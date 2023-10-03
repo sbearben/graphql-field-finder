@@ -58,8 +58,8 @@ exec(`git grep -rl "gql" -- '*.ts' '*.tsx'`, (error, stdout, stderr) => {
 
   console.log(
     usages
-      // .map(usage => `${usage.filename}:${usage.line} ${usage.operationName}`)
-      .map(usage => `${usage.filename}#L${usage.line} - ${usage.operationName.toLowerCase()}`)
+      .map(usage => `${usage.filename}:${usage.line}`)
+      //.map(usage => `${usage.filename}#L${usage.line} - ${usage.operationName.toLowerCase()}`)
       .join("\n")
   );
 });
@@ -67,6 +67,8 @@ exec(`git grep -rl "gql" -- '*.ts' '*.tsx'`, (error, stdout, stderr) => {
 // Given a filename and a Type.field name, read the file contents and return a
 // list of operations/fragments where this field is used.
 function findGraphQLUsagesInFile(filename, typeDotField) {
+  const [typeName, fieldName] = desiredTypeDotField.split(".");
+
   const fileContents = readFileSync(filename, { encoding: "utf-8" });
   const ast = parseJS(fileContents, {
     sourceType: "module",
@@ -83,6 +85,7 @@ function findGraphQLUsagesInFile(filename, typeDotField) {
   });
 
   const usages = [];
+
   graphqlStringNodes.forEach(jsNode => {
     let ast
     try {
@@ -98,19 +101,31 @@ function findGraphQLUsagesInFile(filename, typeDotField) {
       ast,
       visitWithTypeInfo(typeInfo, {
         Field(graphqlNode) {
-          if (!typeInfo.getParentType()) {
-            return
-          }
-          
-          const currentTypeDotField =
-            typeInfo.getParentType().name + "." + graphqlNode.name.value;
+          // If the field name is *, we're looking for any usage of the type
+          if (fieldName === "*") {
+            if (typeInfo.getType()?.name === typeName) {
+              usages.push({
+                filename,
+                operationName: ast.definitions[0].name.value,
+                line: jsNode.loc.start.line
+              });
+            }
+          // Otherwise, we're looking for a specific field
+          } else {
+            if (!typeInfo.getParentType()) {
+              return
+            }
 
-          if (currentTypeDotField === typeDotField) {
-            usages.push({
-              filename,
-              operationName: ast.definitions[0].name.value,
-              line: jsNode.loc.start.line
-            });
+            const currentTypeDotField =
+              typeInfo.getParentType().name + "." + graphqlNode.name.value;
+
+            if (currentTypeDotField === typeDotField) {
+              usages.push({
+                filename,
+                operationName: ast.definitions[0].name.value,
+                line: jsNode.loc.start.line
+              });
+            }
           }
         }
       })
@@ -129,7 +144,7 @@ function getDesiredTypeDotField(desiredTypeDotField) {
   if (!schema.getType(typeName)) {
     throw new Error(`Couldn't find type ${typeName} in schema.`);
   }
-  if (!schema.getType(typeName).getFields()[fieldName]) {
+  if (fieldName !== "*" && !schema.getType(typeName).getFields()[fieldName]) {
     throw new Error(`Couldn't find field ${fieldName} on type ${typeName}.`);
   }
   return desiredTypeDotField;
